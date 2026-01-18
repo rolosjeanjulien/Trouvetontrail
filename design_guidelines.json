@@ -1,0 +1,176 @@
+{
+  "identity": {
+    "name": "E1: Nocturnal Nature",
+    "description": "A high-performance, dark-mode-first design language for trail runners. It blends the raw grit of mountain endurance with the precision of technical equipment. Think 'Salomon S/Lab meets Apple Watch Ultra'.",
+    "principles": [
+      "Fusion: Technical Precision (Data) + Organic Chaos (Nature)",
+      "Emotion: Solitude, Endurance, Achievement",
+      "Contrast: Deepest Blacks vs. Bio-luminescent Accents",
+      "Depth: Layered maps and elevation profiles as visual anchors"
+    ]
+  },
+  "typography": {
+    "primary_font": "Inter",
+    "secondary_font": "Barlow Condensed",
+    "import_statement": "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;800&family=Inter:wght@300;400;500;600&display=swap');",
+    "usage": {
+      "headings": "font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;",
+      "body": "font-family: 'Inter', sans-serif; font-weight: 400; line-height: 1.6;",
+      "data_labels": "font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.75rem;"
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#09090b",
+      "surface": "#18181b",
+      "surface_highlight": "#27272a",
+      "border": "#27272a",
+      "primary": "#d9f99d",
+      "primary_foreground": "#1a2e05",
+      "secondary": "#38bdf8",
+      "muted": "#a1a1aa",
+      "danger": "#ef4444"
+    },
+    "tailwind_config": {
+      "extend": {
+        "colors": {
+          "background": "#09090b",
+          "foreground": "#fafafa",
+          "card": {
+            "DEFAULT": "#18181b",
+            "foreground": "#fafafa"
+          },
+          "popover": {
+            "DEFAULT": "#09090b",
+            "foreground": "#fafafa"
+          },
+          "primary": {
+            "DEFAULT": "#d9f99d",
+            "foreground": "#1a2e05"
+          },
+          "secondary": {
+            "DEFAULT": "#27272a",
+            "foreground": "#fafafa"
+          },
+          "muted": {
+            "DEFAULT": "#27272a",
+            "foreground": "#a1a1aa"
+          },
+          "accent": {
+            "DEFAULT": "#27272a",
+            "foreground": "#fafafa"
+          },
+          "destructive": {
+            "DEFAULT": "#7f1d1d",
+            "foreground": "#fef2f2"
+          },
+          "border": "#27272a",
+          "input": "#27272a",
+          "ring": "#d9f99d"
+        },
+        "fontFamily": {
+          "sans": ["Inter", "sans-serif"],
+          "heading": ["Barlow Condensed", "sans-serif"]
+        }
+      }
+    }
+  },
+  "visual_enhancers": {
+    "borders": "1px solid rgba(255, 255, 255, 0.08)",
+    "shadows": "0 4px 24px -2px rgba(0, 0, 0, 0.4)",
+    "glassmorphism": "backdrop-filter: blur(12px); background: rgba(24, 24, 27, 0.7); border: 1px solid rgba(255, 255, 255, 0.05);",
+    "gradients": {
+      "hero_overlay": "linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0.8) 60%, rgba(9,9,11,1) 100%)",
+      "accent_glow": "radial-gradient(circle at center, rgba(217, 249, 157, 0.15) 0%, rgba(9,9,11,0) 70%)"
+    },
+    "textures": "Use subtle topographic line patterns (SVG) on card backgrounds with 5% opacity."
+  },
+  "layout_strategies": {
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "spacing": {
+      "section_gap": "py-24",
+      "component_gap": "gap-8"
+    },
+    "grids": {
+      "bento": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4",
+      "dashboard": "grid grid-cols-12 gap-6"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-6 font-heading font-bold tracking-wide uppercase text-lg transition-all hover:scale-105",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-full px-6 py-4 font-heading font-semibold tracking-wide uppercase text-sm border border-white/10"
+    },
+    "cards": {
+      "race_card": "group relative overflow-hidden rounded-2xl bg-card border border-border hover:border-primary/50 transition-colors duration-300",
+      "stat_card": "bg-secondary/50 p-6 rounded-xl border border-white/5 flex flex-col justify-between"
+    },
+    "inputs": {
+      "default": "bg-background border-input focus:border-primary focus:ring-1 focus:ring-primary rounded-lg h-12 px-4"
+    }
+  },
+  "image_urls": {
+    "hero_background": {
+      "url": "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?q=80&w=2074&auto=format&fit=crop",
+      "alt": "Trail runner on a ridge at sunset",
+      "category": "hero"
+    },
+    "map_placeholder": {
+      "url": "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2050&auto=format&fit=crop",
+      "alt": "Topographic map style view",
+      "category": "map"
+    },
+    "race_thumbnails": [
+      {
+        "url": "https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=2074&auto=format&fit=crop",
+        "alt": "Mountain trail path",
+        "category": "race"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1486218119243-13883505764c?q=80&w=2072&auto=format&fit=crop",
+        "alt": "Runner in distance",
+        "category": "race"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?q=80&w=2070&auto=format&fit=crop",
+        "alt": "Sport shoes on trail",
+        "category": "race"
+      }
+    ],
+    "auth_background": {
+      "url": "https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?q=80&w=2070&auto=format&fit=crop",
+      "alt": "Dark moody forest trail",
+      "category": "auth"
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Install 'lucide-react' for icons. Use 'Barlow Condensed' for all headers (h1-h6) and 'Inter' for body text.",
+    "2. THEME: Force dark mode. Do not implement a light mode toggle. The brand is strictly nocturnal/outdoor.",
+    "3. MAPS: Use 'react-leaflet'. Style the map tiles using a dark provider (e.g., CartoDB Dark Matter) to match the UI. CSS: '.leaflet-container { background: #09090b; }'.",
+    "4. COMPONENTS: Customize Shadcn components. Remove default rounded-md and use rounded-xl or rounded-2xl for a more modern feel. Increase padding inside cards (p-6 or p-8).",
+    "5. LAYOUT: For the Race List, use a Masonry or Grid layout. Do not use a simple table. Each race card should show the elevation profile (simulated with a small sparkline chart if needed).",
+    "6. FORMS: In the 'Add Race' form, use multi-step wizards if possible, or clearly sectioned long forms with sticky headers.",
+    "7. IMAGES: Use the provided Unsplash URLs. Do not use placeholders like 'via.placeholder.com'.",
+    "8. ANIMATION: Add 'hover:scale-[1.02]' to race cards. Use 'framer-motion' for page transitions if possible."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy",
+    "Use glass-morphism effects with backdrop filters (12-24px blur)",
+    "You MUST NOT apply universal transition. Eg: 'transition: all'. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms",
+    "You MUST NOT center align the app container, ie do not add '.App { text-align: center; }' in the css file. This disrupts the human natural reading flow of text",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯📚🎭🎬🎪🎉🎊🎁🎀🎂🍰🎈🎨🎰💰💵💳🏦💎🪙💸🤑📊📈📉💹🔢🏆🥇 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Subtle grain textures, noise overlays, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Main agent relies on these image URLs. Missing categories (especially sponsor logos) = main agent will use placeholder text which is FORBIDDEN",
+    "Prioritize using pre-existing components from src/components/ui when applicable",
+    "Create new components that match the style and conventions of existing components when needed",
+    "Examine existing components to understand the project's component patterns before creating new ones",
+    "Components MUST use named exports (export const ComponentName = ...)",
+    "Pages MUST use default exports (export default function PageName() {...})",
+    "Use 'sonner' for toasts. Sonner component are located in '/app/src/components/ui/sonner.tsx'"
+  ]
+}
