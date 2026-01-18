@@ -1,34 +1,81 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Main App styles - minimal, most styling in Tailwind */
+
+/* Hero section gradient overlay */
+.hero-overlay {
+    background: linear-gradient(to bottom, rgba(9,9,11,0) 0%, rgba(9,9,11,0.8) 60%, rgba(9,9,11,1) 100%);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+/* Accent glow effect */
+.accent-glow {
+    background: radial-gradient(circle at center, rgba(217, 249, 157, 0.1) 0%, rgba(9,9,11,0) 70%);
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+/* Map container specific styles */
+.map-container {
+    border-radius: 1rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.App-link {
-    color: #61dafb;
+/* Input focus ring */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(217, 249, 157, 0.3);
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+/* Button hover states */
+.btn-primary {
+    transition: background-color 0.2s ease, transform 0.15s ease;
 }
+
+.btn-primary:hover {
+    transform: scale(1.02);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* Navigation link active state */
+.nav-link-active {
+    color: #d9f99d;
+    position: relative;
+}
+
+.nav-link-active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #d9f99d;
+    border-radius: 1px;
+}
+
+/* Topographic texture overlay - SVG pattern */
+.topo-texture {
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 Q 30 30, 50 10 T 90 10' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3Cpath d='M10 30 Q 30 50, 50 30 T 90 30' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3Cpath d='M10 50 Q 30 70, 50 50 T 90 50' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3Cpath d='M10 70 Q 30 90, 50 70 T 90 70' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3Cpath d='M10 90 Q 30 110, 50 90 T 90 90' fill='none' stroke='rgba(255,255,255,0.03)' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 100px 100px;
+}
+
+/* Loader animation */
+.loader {
+    border: 3px solid #27272a;
+    border-top: 3px solid #d9f99d;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Distance tag colors */
+.distance-short { background-color: rgba(34, 197, 94, 0.2); color: #22c55e; }
+.distance-medium { background-color: rgba(234, 179, 8, 0.2); color: #eab308; }
+.distance-long { background-color: rgba(249, 115, 22, 0.2); color: #f97316; }
+.distance-ultra { background-color: rgba(239, 68, 68, 0.2); color: #ef4444; }
