@@ -393,6 +393,116 @@ async def notify_race_approved(race: dict):
     # Notify all users who have notifications enabled
     logger.info(f"Race approved: {race['name']}")
 
+# ==================== IMPORT ROUTES ====================
+@api_router.post("/admin/import")
+async def import_races_from_excel(file: UploadFile = File(...), user: dict = Depends(get_admin_user)):
+    """Import races from Excel file"""
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        raise HTTPException(status_code=400, detail="Le fichier doit être au format Excel (.xlsx ou .xls)")
+    
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents), sheet_name='Courses')
+        
+        # Remove empty rows
+        df = df.dropna(subset=['name'])
+        df = df[df['name'].str.strip() != '']
+        
+        # Filter out example rows
+        df = df[~df['name'].str.contains('EXEMPLE', case=False, na=False)]
+        
+        if len(df) == 0:
+            raise HTTPException(status_code=400, detail="Aucune course valide trouvée dans le fichier")
+        
+        imported_count = 0
+        skipped_count = 0
+        errors = []
+        
+        required_fields = ['name', 'description', 'location', 'region', 'department', 
+                          'latitude', 'longitude', 'distance_km', 'elevation_gain',
+                          'race_date', 'registration_open_date', 'is_utmb']
+        
+        for idx, row in df.iterrows():
+            try:
+                # Check required fields
+                missing_fields = []
+                for field in required_fields:
+                    if field not in row or pd.isna(row[field]) or str(row[field]).strip() == '':
+                        missing_fields.append(field)
+                
+                if missing_fields:
+                    errors.append(f"Ligne {idx + 2}: Champs manquants: {', '.join(missing_fields)}")
+                    skipped_count += 1
+                    continue
+                
+                # Check if race already exists
+                existing = await db.races.find_one({"name": str(row['name']).strip()})
+                if existing:
+                    errors.append(f"Ligne {idx + 2}: Course '{row['name']}' existe déjà")
+                    skipped_count += 1
+                    continue
+                
+                # Parse dates
+                def parse_date(val):
+                    if pd.isna(val) or val == '':
+                        return None
+                    if isinstance(val, datetime):
+                        return val.strftime('%Y-%m-%d')
+                    return str(val).strip()
+                
+                # Parse is_utmb
+                is_utmb_val = row.get('is_utmb', False)
+                if isinstance(is_utmb_val, str):
+                    is_utmb = is_utmb_val.lower() in ['true', 'oui', 'yes', '1']
+                else:
+                    is_utmb = bool(is_utmb_val)
+                
+                race = {
+                    "id": str(uuid.uuid4()),
+                    "name": str(row['name']).strip(),
+                    "description": str(row['description']).strip(),
+                    "location": str(row['location']).strip(),
+                    "region": str(row['region']).strip(),
+                    "department": str(row['department']).strip(),
+                    "latitude": float(row['latitude']),
+                    "longitude": float(row['longitude']),
+                    "distance_km": float(row['distance_km']),
+                    "elevation_gain": int(float(row['elevation_gain'])),
+                    "race_date": parse_date(row['race_date']),
+                    "registration_open_date": parse_date(row['registration_open_date']),
+                    "registration_close_date": parse_date(row.get('registration_close_date')),
+                    "is_utmb": is_utmb,
+                    "website_url": str(row.get('website_url', '')).strip() if pd.notna(row.get('website_url')) else None,
+                    "image_url": str(row.get('image_url', '')).strip() if pd.notna(row.get('image_url')) else None,
+                    "status": RaceStatus.APPROVED,  # Admin import = auto-approved
+                    "submitted_by": user['id'],
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                
+                await db.races.insert_one(race)
+                imported_count += 1
+                
+            except Exception as e:
+                errors.append(f"Ligne {idx + 2}: Erreur - {str(e)}")
+                skipped_count += 1
+        
+        return {
+            "message": f"Import terminé: {imported_count} course(s) importée(s), {skipped_count} ignorée(s)",
+            "imported": imported_count,
+            "skipped": skipped_count,
+            "errors": errors[:20]  # Limit errors shown
+        }
+        
+    except Exception as e:
+        logger.error(f"Import error: {e}")
+        raise HTTPException(status_code=400, detail=f"Erreur lors de l'import: {str(e)}")
+
+@api_router.delete("/admin/races/all")
+async def delete_all_races(user: dict = Depends(get_admin_user)):
+    """Delete all races (use with caution)"""
+    result = await db.races.delete_many({})
+    return {"message": f"{result.deleted_count} course(s) supprimée(s)"}
+
 # ==================== FAVORITES ROUTES ====================
 @api_router.get("/favorites", response_model=List[dict])
 async def get_favorites(user: dict = Depends(get_current_user)):
