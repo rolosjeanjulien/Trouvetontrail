@@ -115,7 +115,7 @@ export default function AdminPanel() {
 
         {/* Stats */}
         <Card className="p-6 bg-card border-border rounded-2xl mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <AlertCircle className="h-6 w-6 text-yellow-400" />
               <span className="text-lg">
@@ -123,6 +123,14 @@ export default function AdminPanel() {
                 <span className="text-muted-foreground">course(s) en attente de modération</span>
               </span>
             </div>
+            <Button 
+              onClick={() => navigate('/admin/import')}
+              className="gap-2 rounded-xl bg-primary text-primary-foreground"
+              data-testid="import-btn"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Importer des courses
+            </Button>
           </div>
         </Card>
 
