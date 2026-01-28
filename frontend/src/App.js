@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AddRace from "./pages/AddRace";
 import AdminPanel from "./pages/AdminPanel";
+import ImportRaces from "./pages/ImportRaces";
 
 function App() {
   return (
