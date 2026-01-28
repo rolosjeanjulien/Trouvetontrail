@@ -36,7 +36,7 @@ SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@trailfrancapp.com')
 
 # Create the main app
-app = FastAPI(title="Trail France API")
+app = FastAPI(title="Trouve Ton Dossard API")
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
@@ -788,7 +788,7 @@ async def seed_data():
 # ==================== ROOT ====================
 @api_router.get("/")
 async def root():
-    return {"message": "Trail France API"}
+    return {"message": "Trouve Ton Dossard API"}
 
 # Include router
 app.include_router(api_router)
