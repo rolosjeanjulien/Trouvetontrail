@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { formatDate, getDistanceCategory } from '../lib/utils';
 import {
   Shield, Check, X, Loader2, MapPin, Calendar, Mountain,
-  ExternalLink, AlertCircle
+  ExternalLink, AlertCircle, FileSpreadsheet
 } from 'lucide-react';
 import {
   Dialog,
