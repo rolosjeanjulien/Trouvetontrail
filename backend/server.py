@@ -188,11 +188,19 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
 def calculate_registration_status(open_date: str, close_date: Optional[str]) -> str:
     now = datetime.now(timezone.utc)
     try:
-        open_dt = datetime.fromisoformat(open_date.replace('Z', '+00:00'))
+        # Handle dates without timezone (YYYY-MM-DD format)
+        if 'T' not in open_date and '+' not in open_date:
+            open_dt = datetime.strptime(open_date, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+        else:
+            open_dt = datetime.fromisoformat(open_date.replace('Z', '+00:00'))
+        
         if now < open_dt:
             return RegistrationStatus.NOT_OPEN
         if close_date:
-            close_dt = datetime.fromisoformat(close_date.replace('Z', '+00:00'))
+            if 'T' not in close_date and '+' not in close_date:
+                close_dt = datetime.strptime(close_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+            else:
+                close_dt = datetime.fromisoformat(close_date.replace('Z', '+00:00'))
             if now > close_dt:
                 return RegistrationStatus.CLOSED
         return RegistrationStatus.OPEN
