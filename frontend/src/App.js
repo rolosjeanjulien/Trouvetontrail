@@ -32,6 +32,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/add-race" element={<AddRace />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin/import" element={<ImportRaces />} />
           </Routes>
           <Toaster 
             position="top-right" 
