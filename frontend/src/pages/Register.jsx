@@ -63,7 +63,7 @@ export default function Register() {
           </Link>
           <h1 className="font-heading text-2xl font-bold">CRÉER UN COMPTE</h1>
           <p className="text-muted-foreground mt-2">
-            Rejoignez la communauté TrailFrance
+            Rejoignez la communauté Trouve Ton Dossard
           </p>
         </div>
 

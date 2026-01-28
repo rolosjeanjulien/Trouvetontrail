@@ -422,11 +422,11 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <Mountain className="h-6 w-6 text-primary" />
               <span className="font-heading text-lg font-bold">
-                TRAIL<span className="text-primary">FRANCE</span>
+                TROUVE TON <span className="text-primary">DOSSARD</span>
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2025 TrailFrance. Tous droits réservés.
+              © 2025 Trouve Ton Dossard. Tous droits réservés.
             </p>
           </div>
         </div>

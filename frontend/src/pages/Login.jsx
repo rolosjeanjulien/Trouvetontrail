@@ -50,7 +50,7 @@ export default function Login() {
           </Link>
           <h1 className="font-heading text-2xl font-bold">CONNEXION</h1>
           <p className="text-muted-foreground mt-2">
-            Accédez à votre compte TrailFrance
+            Accédez à votre compte Trouve Ton Dossard
           </p>
         </div>
 
