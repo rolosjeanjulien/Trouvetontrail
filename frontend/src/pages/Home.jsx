@@ -392,6 +392,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Ad Banner - discret entre les sections */}
+      <AdBannerHorizontal className="bg-background border-y border-border" />
+
       {/* CTA Section */}
       <section className="py-24 bg-card border-y border-border">
         <div className="max-w-4xl mx-auto px-4 text-center">
