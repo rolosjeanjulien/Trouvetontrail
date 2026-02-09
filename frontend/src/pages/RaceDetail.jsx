@@ -251,6 +251,9 @@ export default function RaceDetail() {
                 </div>
               </div>
             </Card>
+
+            {/* Ad Banner - sidebar */}
+            <AdBannerSidebar className="mt-6" />
           </div>
         </div>
       </div>
