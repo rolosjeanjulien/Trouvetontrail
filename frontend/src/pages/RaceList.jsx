@@ -89,17 +89,23 @@ export default function RaceList() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {races.map((race, i) => (
-              <div key={race.id} className={`animate-fade-in stagger-${(i % 6) + 1}`}>
-                <RaceCard
-                  race={race}
-                  isFavorite={favorites.includes(race.id)}
-                  onFavoriteChange={handleFavoriteChange}
-                />
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {races.map((race, i) => (
+                <div key={race.id} className={`animate-fade-in stagger-${(i % 6) + 1}`}>
+                  <RaceCard
+                    race={race}
+                    isFavorite={favorites.includes(race.id)}
+                    onFavoriteChange={handleFavoriteChange}
+                  />
+                </div>
+              ))}
+            </div>
+            {/* Ad after results */}
+            {races.length > 3 && (
+              <AdBannerHorizontal className="mt-8" />
+            )}
+          </>
         )}
       </div>
     </div>
