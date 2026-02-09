@@ -7,6 +7,7 @@ import { RaceCard } from '../components/races/RaceCard';
 import { racesAPI, seedAPI, favoritesAPI } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { FRANCE_REGIONS, formatDate, getDistanceCategory } from '../lib/utils';
+import { AdBannerHorizontal } from '../components/ads/AdBanner';
 import {
   Select,
   SelectContent,
