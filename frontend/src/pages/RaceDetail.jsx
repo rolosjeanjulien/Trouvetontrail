@@ -6,6 +6,7 @@ import { Card } from '../components/ui/card';
 import { racesAPI, favoritesAPI } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
 import { formatDate, getDistanceCategory, getRegistrationStatusLabel } from '../lib/utils';
+import { AdBannerSidebar } from '../components/ads/AdBanner';
 import { toast } from 'sonner';
 import {
   MapPin, Calendar, Mountain, Clock, Heart, ExternalLink,
