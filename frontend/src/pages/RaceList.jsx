@@ -3,6 +3,7 @@ import { RaceCard } from '../components/races/RaceCard';
 import { RaceFilters } from '../components/races/RaceFilters';
 import { racesAPI, favoritesAPI } from '../lib/api';
 import { useAuth } from '../lib/auth-context';
+import { AdBannerHorizontal } from '../components/ads/AdBanner';
 import { Loader2 } from 'lucide-react';
 
 export default function RaceList() {
