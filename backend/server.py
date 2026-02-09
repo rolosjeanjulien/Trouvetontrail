@@ -268,6 +268,83 @@ async def get_me(user: dict = Depends(get_current_user)):
         email_notifications=user.get('email_notifications', True)
     )
 
+# ==================== PASSWORD RESET ====================
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+@api_router.post("/auth/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, background_tasks: BackgroundTasks):
+    """Send password reset email"""
+    user = await db.users.find_one({"email": request.email}, {"_id": 0})
+    
+    # Always return success for security (don't reveal if email exists)
+    if not user:
+        return {"message": "Si un compte existe, un email a été envoyé"}
+    
+    # Generate reset token (valid for 1 hour)
+    reset_token = str(uuid.uuid4())
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Store reset token
+    await db.password_resets.delete_many({"user_id": user['id']})  # Remove old tokens
+    await db.password_resets.insert_one({
+        "user_id": user['id'],
+        "token": reset_token,
+        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Send email (in background)
+    reset_url = f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token={reset_token}"
+    
+    if SENDGRID_API_KEY:
+        html_content = f"""
+        <h2>Réinitialisation de votre mot de passe</h2>
+        <p>Bonjour {user['name']},</p>
+        <p>Vous avez demandé la réinitialisation de votre mot de passe sur Trouve Ton Dossard.</p>
+        <p>Cliquez sur le lien ci-dessous pour définir un nouveau mot de passe :</p>
+        <p><a href="{reset_url}" style="background-color: #d9f99d; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block;">Réinitialiser mon mot de passe</a></p>
+        <p>Ce lien expire dans 1 heure.</p>
+        <p>Si vous n'avez pas demandé cette réinitialisation, ignorez cet email.</p>
+        <p>L'équipe Trouve Ton Dossard</p>
+        """
+        background_tasks.add_task(send_email, user['email'], "Réinitialisation de votre mot de passe", html_content)
+    else:
+        logger.info(f"Password reset link for {user['email']}: {reset_url}")
+    
+    return {"message": "Si un compte existe, un email a été envoyé"}
+
+@api_router.post("/auth/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    """Reset password with token"""
+    # Find reset token
+    reset_doc = await db.password_resets.find_one({"token": request.token}, {"_id": 0})
+    
+    if not reset_doc:
+        raise HTTPException(status_code=400, detail="Lien invalide ou expiré")
+    
+    # Check expiration
+    expires_at = datetime.fromisoformat(reset_doc['expires_at'].replace('Z', '+00:00'))
+    if datetime.now(timezone.utc) > expires_at:
+        await db.password_resets.delete_one({"token": request.token})
+        raise HTTPException(status_code=400, detail="Lien expiré")
+    
+    # Update password
+    new_hash = hash_password(request.new_password)
+    await db.users.update_one(
+        {"id": reset_doc['user_id']},
+        {"$set": {"password": new_hash}}
+    )
+    
+    # Delete reset token
+    await db.password_resets.delete_one({"token": request.token})
+    
+    return {"message": "Mot de passe modifié avec succès"}
+
 # ==================== RACES ROUTES ====================
 @api_router.get("/races", response_model=List[RaceResponse])
 async def get_races(
