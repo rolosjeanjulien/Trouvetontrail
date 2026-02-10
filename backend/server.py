@@ -592,9 +592,17 @@ async def delete_all_races(user: dict = Depends(get_admin_user)):
 @api_router.get("/favorites", response_model=List[dict])
 async def get_favorites(user: dict = Depends(get_current_user)):
     favorites = await db.favorites.find({"user_id": user['id']}, {"_id": 0}).to_list(100)
+    
+    # Collect all race IDs for bulk query (avoid N+1)
+    race_ids = [fav['race_id'] for fav in favorites]
+    
+    # Single bulk query for all races
+    races = await db.races.find({"id": {"$in": race_ids}}, {"_id": 0}).to_list(100)
+    races_dict = {race['id']: race for race in races}
+    
     result = []
     for fav in favorites:
-        race = await db.races.find_one({"id": fav['race_id']}, {"_id": 0})
+        race = races_dict.get(fav['race_id'])
         if race:
             race['registration_status'] = calculate_registration_status(
                 race.get('registration_open_date', ''),
