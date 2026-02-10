@@ -143,7 +143,9 @@ export default function CGU() {
               <h2 className="font-heading text-xl font-bold text-primary mb-4">12. Contact</h2>
               <p className="text-muted-foreground">
                 Pour toute question concernant ces CGU, vous pouvez nous contacter à : 
-                <strong className="text-foreground ml-1">[email à compléter]</strong>
+                <a href="mailto:trouvetontrail.run@gmail.com" className="text-primary hover:underline ml-1">
+                  trouvetontrail.run@gmail.com
+                </a>
               </p>
             </section>
           </div>

@@ -33,9 +33,8 @@ export default function Confidentialite() {
                 Le responsable du traitement des données est :
               </p>
               <ul className="text-muted-foreground mt-2 space-y-1">
-                <li><strong className="text-foreground">Nom :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Email :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Adresse :</strong> [À compléter]</li>
+                <li><strong className="text-foreground">Éditeur :</strong> trouvetontrail.run</li>
+                <li><strong className="text-foreground">Email :</strong> trouvetontrail.run@gmail.com</li>
               </ul>
             </section>
 
@@ -100,7 +99,10 @@ export default function Confidentialite() {
                 <li><strong className="text-foreground">Droit de retrait du consentement :</strong> à tout moment pour les traitements basés sur le consentement</li>
               </ul>
               <p className="text-muted-foreground mt-4">
-                Pour exercer ces droits, contactez-nous à : <strong className="text-foreground">[email à compléter]</strong>
+                Pour exercer ces droits, contactez-nous à : 
+                <a href="mailto:trouvetontrail.run@gmail.com" className="text-primary hover:underline ml-1">
+                  trouvetontrail.run@gmail.com
+                </a>
               </p>
             </section>
 
@@ -125,7 +127,10 @@ export default function Confidentialite() {
               <h2 className="font-heading text-xl font-bold text-primary mb-4">10. Contact et réclamation</h2>
               <p className="text-muted-foreground">
                 Pour toute question relative à cette politique ou pour exercer vos droits, contactez-nous 
-                à l'adresse : <strong className="text-foreground">[email à compléter]</strong>
+                à l'adresse : 
+                <a href="mailto:trouvetontrail.run@gmail.com" className="text-primary hover:underline ml-1">
+                  trouvetontrail.run@gmail.com
+                </a>
               </p>
               <p className="text-muted-foreground mt-4">
                 Vous pouvez également introduire une réclamation auprès de la CNIL : 

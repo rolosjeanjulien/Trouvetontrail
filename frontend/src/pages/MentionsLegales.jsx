@@ -24,29 +24,13 @@ export default function MentionsLegales() {
                 Le site <strong className="text-foreground">Trouve Ton Dossard</strong> est édité par :
               </p>
               <ul className="text-muted-foreground mt-2 space-y-1">
-                <li><strong className="text-foreground">Nom / Raison sociale :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Adresse :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Téléphone :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Email :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">SIRET :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Directeur de la publication :</strong> [À compléter]</li>
+                <li><strong className="text-foreground">Éditeur :</strong> trouvetontrail.run</li>
+                <li><strong className="text-foreground">Email :</strong> trouvetontrail.run@gmail.com</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="font-heading text-xl font-bold text-primary mb-4">2. Hébergement</h2>
-              <p className="text-muted-foreground">
-                Le site est hébergé par :
-              </p>
-              <ul className="text-muted-foreground mt-2 space-y-1">
-                <li><strong className="text-foreground">Hébergeur :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Adresse :</strong> [À compléter]</li>
-                <li><strong className="text-foreground">Téléphone :</strong> [À compléter]</li>
-              </ul>
-            </section>
-
-            <section>
-              <h2 className="font-heading text-xl font-bold text-primary mb-4">3. Propriété intellectuelle</h2>
+              <h2 className="font-heading text-xl font-bold text-primary mb-4">2. Propriété intellectuelle</h2>
               <p className="text-muted-foreground">
                 L'ensemble du contenu de ce site (textes, images, vidéos, logos, icônes, sons, logiciels, etc.) 
                 est protégé par le droit d'auteur et le droit des marques. Toute reproduction, représentation, 
@@ -56,23 +40,37 @@ export default function MentionsLegales() {
             </section>
 
             <section>
-              <h2 className="font-heading text-xl font-bold text-primary mb-4">4. Limitation de responsabilité</h2>
+              <h2 className="font-heading text-xl font-bold text-primary mb-4">3. Limitation de responsabilité</h2>
               <p className="text-muted-foreground">
                 Les informations contenues sur ce site sont aussi précises que possible et le site est 
                 périodiquement mis à jour, mais peut toutefois contenir des inexactitudes, des omissions 
-                ou des lacunes. L'éditeur ne pourra être tenu responsable des dommages directs et indirects 
+                ou des lacunes. Les informations relatives aux courses (dates, inscriptions, parcours) sont 
+                fournies à titre indicatif et doivent être vérifiées auprès des organisateurs officiels.
+              </p>
+              <p className="text-muted-foreground mt-4">
+                L'éditeur ne pourra être tenu responsable des dommages directs et indirects 
                 causés au matériel de l'utilisateur, lors de l'accès au site.
               </p>
             </section>
 
             <section>
-              <h2 className="font-heading text-xl font-bold text-primary mb-4">5. Données personnelles</h2>
+              <h2 className="font-heading text-xl font-bold text-primary mb-4">4. Données personnelles</h2>
               <p className="text-muted-foreground">
                 Pour plus d'informations sur la collecte et le traitement de vos données personnelles, 
                 veuillez consulter notre{' '}
                 <Link to="/confidentialite" className="text-primary hover:underline">
                   Politique de confidentialité
                 </Link>.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="font-heading text-xl font-bold text-primary mb-4">5. Contact</h2>
+              <p className="text-muted-foreground">
+                Pour toute question, vous pouvez nous contacter à l'adresse : 
+                <a href="mailto:trouvetontrail.run@gmail.com" className="text-primary hover:underline ml-1">
+                  trouvetontrail.run@gmail.com
+                </a>
               </p>
             </section>
 
