@@ -10,8 +10,20 @@ import { AdBannerSidebar } from '../components/ads/AdBanner';
 import { toast } from 'sonner';
 import {
   MapPin, Calendar, Mountain, Clock, Heart, ExternalLink,
-  ArrowLeft, Share2, Loader2
+  ArrowLeft, Share2, Loader2, Flag, AlertTriangle, CheckCircle
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function RaceDetail() {
   const { id } = useParams();
@@ -21,6 +33,9 @@ export default function RaceDetail() {
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [hasReported, setHasReported] = useState(false);
 
   useEffect(() => {
     const loadRace = async () => {
@@ -32,6 +47,10 @@ export default function RaceDetail() {
           const favRes = await favoritesAPI.getAll();
           setIsFavorite(favRes.data.some(f => f.race.id === id));
         }
+        
+        // Check if already reported (localStorage)
+        const reported = localStorage.getItem(`reported_${id}`);
+        if (reported) setHasReported(true);
       } catch (err) {
         toast.error('Course non trouvée');
         navigate('/races');
@@ -79,6 +98,47 @@ export default function RaceDetail() {
     }
   };
 
+  const handleReportClosed = async () => {
+    setReportLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/races/${race.id}/report-closed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: 'Inscriptions closes signalées par un visiteur' }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || 'Erreur');
+      }
+      
+      // Mark as reported in localStorage
+      localStorage.setItem(`reported_${race.id}`, 'true');
+      setHasReported(true);
+      
+      if (data.auto_closed) {
+        toast.success('Les inscriptions ont été automatiquement fermées. Merci !', {
+          duration: 5000,
+          icon: <CheckCircle className="h-5 w-5 text-green-500" />
+        });
+        // Refresh race data
+        const res = await racesAPI.getById(id);
+        setRace(res.data);
+      } else {
+        toast.success(`Merci ! ${data.report_count}/3 signalement(s). L'équipe va vérifier.`, {
+          duration: 5000
+        });
+      }
+      
+      setReportDialogOpen(false);
+    } catch (err) {
+      toast.error(err.message || 'Erreur lors du signalement');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -91,6 +151,7 @@ export default function RaceDetail() {
 
   const distanceCategory = getDistanceCategory(race.distance_km);
   const statusInfo = getRegistrationStatusLabel(race.registration_status);
+  const isOpen = race.registration_status === 'open';
 
   return (
     <div className="min-h-screen pt-16" data-testid="race-detail-page">
@@ -130,6 +191,11 @@ export default function RaceDetail() {
               <Badge variant="outline" className={`${statusInfo.class} border`}>
                 {statusInfo.label}
               </Badge>
+              {race.auto_closed_by_reports && (
+                <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 border">
+                  Fermé par la communauté
+                </Badge>
+              )}
             </div>
             <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-2">
               {race.name}
@@ -188,6 +254,49 @@ export default function RaceDetail() {
                 <p><strong className="text-foreground">Région:</strong> {race.region}</p>
               </div>
             </Card>
+
+            {/* Report Box - Visible si inscriptions ouvertes */}
+            {isOpen && (
+              <Card className="p-6 bg-orange-500/10 border-orange-500/30 rounded-2xl">
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                    <Flag className="h-6 w-6 text-orange-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-heading text-lg font-bold text-foreground mb-1">
+                      Les inscriptions sont-elles fermées ?
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Si vous savez que les inscriptions à cette course sont closes, signalez-le pour aider 
+                      la communauté. Après 3 signalements, le statut sera automatiquement mis à jour.
+                    </p>
+                    <Button
+                      variant="outline"
+                      className={`rounded-xl border-orange-500/50 ${
+                        hasReported 
+                          ? 'bg-orange-500/20 text-orange-300 cursor-not-allowed' 
+                          : 'text-orange-400 hover:bg-orange-500/20'
+                      }`}
+                      onClick={() => !hasReported && setReportDialogOpen(true)}
+                      disabled={hasReported}
+                      data-testid="report-closed-btn"
+                    >
+                      {hasReported ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Signalement envoyé
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="h-4 w-4 mr-2" />
+                          Signaler inscriptions closes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -257,6 +366,40 @@ export default function RaceDetail() {
           </div>
         </div>
       </div>
+
+      {/* Report Dialog */}
+      <AlertDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-heading flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-orange-400" />
+              Signaler inscriptions closes
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Vous êtes sur le point de signaler que les inscriptions à <strong>{race?.name}</strong> sont 
+              closes ou complètes.
+              <br /><br />
+              • Un email sera envoyé à l'équipe pour vérification
+              <br />
+              • Après 3 signalements, le statut sera automatiquement mis à jour
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReportClosed}
+              disabled={reportLoading}
+              className="bg-orange-500 text-white hover:bg-orange-600"
+            >
+              {reportLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                'Confirmer le signalement'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
