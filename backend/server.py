@@ -875,6 +875,176 @@ async def seed_data():
 async def root():
     return {"message": "Trouve Ton Dossard API"}
 
+# ==================== REPORTS (Signalements) ====================
+class ReportCreate(BaseModel):
+    reason: Optional[str] = "Inscriptions closes"
+
+REPORTS_THRESHOLD = 3  # Nombre de signalements pour validation automatique
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'trouvetontrail.run@gmail.com')
+
+@api_router.post("/races/{race_id}/report-closed")
+async def report_registration_closed(
+    race_id: str, 
+    report: ReportCreate,
+    background_tasks: BackgroundTasks,
+    request_ip: Optional[str] = None
+):
+    """Signaler qu'une course a ses inscriptions closes"""
+    race = await db.races.find_one({"id": race_id}, {"_id": 0})
+    if not race:
+        raise HTTPException(status_code=404, detail="Course non trouvée")
+    
+    # Générer un identifiant unique pour ce visiteur (basé sur IP ou session)
+    # Pour simplicité, on utilise un hash de l'heure + race_id pour limiter les abus
+    visitor_id = str(uuid.uuid4())  # En prod, utiliser IP ou fingerprint
+    
+    # Vérifier si déjà signalé récemment (dans les dernières 24h)
+    existing_report = await db.reports.find_one({
+        "race_id": race_id,
+        "created_at": {"$gte": (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()}
+    })
+    
+    # Créer le signalement
+    report_doc = {
+        "id": str(uuid.uuid4()),
+        "race_id": race_id,
+        "race_name": race['name'],
+        "visitor_id": visitor_id,
+        "reason": report.reason,
+        "status": "pending",  # pending, validated, rejected
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.reports.insert_one(report_doc)
+    
+    # Compter les signalements uniques pour cette course (dernières 7 jours)
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    report_count = await db.reports.count_documents({
+        "race_id": race_id,
+        "status": "pending",
+        "created_at": {"$gte": week_ago}
+    })
+    
+    # Si 3 signalements ou plus → validation automatique
+    if report_count >= REPORTS_THRESHOLD:
+        # Mettre à jour la course pour fermer les inscriptions
+        await db.races.update_one(
+            {"id": race_id},
+            {"$set": {
+                "registration_close_date": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+                "auto_closed_by_reports": True,
+                "auto_closed_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        
+        # Marquer tous les signalements comme validés
+        await db.reports.update_many(
+            {"race_id": race_id, "status": "pending"},
+            {"$set": {"status": "validated"}}
+        )
+        
+        # Envoyer email de notification
+        if SENDGRID_API_KEY:
+            html_content = f"""
+            <h2>🔴 Inscriptions fermées automatiquement</h2>
+            <p><strong>{REPORTS_THRESHOLD} signalements</strong> ont été reçus pour la course :</p>
+            <p style="font-size: 18px; font-weight: bold;">{race['name']}</p>
+            <p>📍 {race['location']}, {race['region']}</p>
+            <p>Les inscriptions ont été automatiquement marquées comme fermées.</p>
+            <p><a href="{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/races/{race_id}">Voir la course</a></p>
+            """
+            background_tasks.add_task(send_email, ADMIN_EMAIL, f"[AUTO] Inscriptions fermées - {race['name']}", html_content)
+        
+        logger.info(f"Auto-closed registration for race {race['name']} after {report_count} reports")
+        return {
+            "message": "Merci ! Les inscriptions ont été automatiquement marquées comme fermées.",
+            "auto_closed": True,
+            "report_count": report_count
+        }
+    
+    # Sinon, envoyer un email de notification à l'admin
+    if SENDGRID_API_KEY:
+        html_content = f"""
+        <h2>⚠️ Nouveau signalement d'inscriptions closes</h2>
+        <p>Un visiteur a signalé que les inscriptions sont closes pour :</p>
+        <p style="font-size: 18px; font-weight: bold;">{race['name']}</p>
+        <p>📍 {race['location']}, {race['region']}</p>
+        <p>📊 <strong>{report_count}/{REPORTS_THRESHOLD}</strong> signalement(s) reçu(s)</p>
+        <p>Raison : {report.reason}</p>
+        <hr>
+        <p>
+            <a href="{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/admin" 
+               style="background-color: #d9f99d; color: #1a1a1a; padding: 12px 24px; text-decoration: none; border-radius: 8px;">
+                Gérer dans l'admin
+            </a>
+        </p>
+        """
+        background_tasks.add_task(send_email, ADMIN_EMAIL, f"[Signalement] {race['name']} - Inscriptions closes", html_content)
+    
+    logger.info(f"Report received for race {race['name']}: {report_count}/{REPORTS_THRESHOLD}")
+    return {
+        "message": "Merci pour votre signalement ! L'équipe va vérifier.",
+        "auto_closed": False,
+        "report_count": report_count
+    }
+
+@api_router.get("/admin/reports")
+async def get_pending_reports(user: dict = Depends(get_admin_user)):
+    """Récupérer tous les signalements en attente"""
+    reports = await db.reports.find({"status": "pending"}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    
+    # Grouper par course
+    grouped = {}
+    for report in reports:
+        race_id = report['race_id']
+        if race_id not in grouped:
+            grouped[race_id] = {
+                "race_id": race_id,
+                "race_name": report['race_name'],
+                "reports": [],
+                "count": 0
+            }
+        grouped[race_id]["reports"].append(report)
+        grouped[race_id]["count"] += 1
+    
+    return list(grouped.values())
+
+@api_router.post("/admin/reports/{race_id}/validate")
+async def validate_report(race_id: str, user: dict = Depends(get_admin_user)):
+    """Valider un signalement et fermer les inscriptions"""
+    race = await db.races.find_one({"id": race_id}, {"_id": 0})
+    if not race:
+        raise HTTPException(status_code=404, detail="Course non trouvée")
+    
+    # Fermer les inscriptions
+    await db.races.update_one(
+        {"id": race_id},
+        {"$set": {
+            "registration_close_date": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+            "manually_closed": True,
+            "closed_at": datetime.now(timezone.utc).isoformat(),
+            "closed_by": user['id']
+        }}
+    )
+    
+    # Marquer les signalements comme validés
+    await db.reports.update_many(
+        {"race_id": race_id, "status": "pending"},
+        {"$set": {"status": "validated", "validated_by": user['id']}}
+    )
+    
+    return {"message": f"Inscriptions fermées pour {race['name']}"}
+
+@api_router.post("/admin/reports/{race_id}/reject")
+async def reject_report(race_id: str, user: dict = Depends(get_admin_user)):
+    """Rejeter les signalements (inscriptions toujours ouvertes)"""
+    # Marquer les signalements comme rejetés
+    result = await db.reports.update_many(
+        {"race_id": race_id, "status": "pending"},
+        {"$set": {"status": "rejected", "rejected_by": user['id']}}
+    )
+    
+    return {"message": f"{result.modified_count} signalement(s) rejeté(s)"}
+
 # Include router
 app.include_router(api_router)
 
