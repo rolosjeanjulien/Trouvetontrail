@@ -79,6 +79,20 @@ Remplacer les placeholders dans `/app/frontend/src/components/ads/AdBanner.jsx`:
 - [ ] Vue calendrier dates inscriptions
 - [ ] Statistiques admin (nombre signalements, courses populaires)
 
+## Deployment Configuration (Feb 2026)
+
+### Files Added
+- `/app/frontend/vercel.json` - Configuration Vercel
+- `/app/backend/render.yaml` - Configuration Render
+- `/app/frontend/.env.example` - Template variables frontend
+- `/app/backend/.env.example` - Template variables backend
+- `/app/DEPLOYMENT.md` - Guide complet de déploiement
+
+### Architecture
+```
+Vercel (Frontend) → Render (Backend) → MongoDB Atlas (DB)
+```
+
 ## Test Credentials
 - **Admin**: admin@trailfrance.com / admin123
 
