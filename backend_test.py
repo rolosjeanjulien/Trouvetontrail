@@ -6,7 +6,7 @@ import json
 from datetime import datetime
 
 class TrailFranceAPITester:
-    def __init__(self, base_url="https://trail-finder-32.preview.emergentagent.com"):
+    def __init__(self, base_url="https://trouve-ton-dossard.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.admin_token = None
