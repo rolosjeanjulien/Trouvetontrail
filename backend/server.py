@@ -137,6 +137,7 @@ class RaceResponse(BaseModel):
     status: str
     submitted_by: Optional[str] = None
     created_at: str
+    auto_closed_by_reports: Optional[bool] = None
 
 class FavoriteResponse(BaseModel):
     id: str
