@@ -1,5 +1,5 @@
 {
   "installCommand": "yarn install --legacy-peer-deps",
   "buildCommand": "yarn build",
-  "outputDirectory": "built"
+  "outputDirectory": "build"
 }
