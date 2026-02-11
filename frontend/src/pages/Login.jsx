@@ -32,7 +32,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20" data-testid="login-page">
-      {/* Background */}
       <div className="fixed inset-0 -z-10">
         <img
           src="https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?q=80&w=2070&auto=format&fit=crop"
@@ -43,7 +42,6 @@ export default function Login() {
       </div>
 
       <Card className="w-full max-w-md p-8 bg-card/80 backdrop-blur-xl border-border rounded-2xl">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
             <Mountain className="h-10 w-10 text-primary" />
@@ -73,4 +71,53 @@ export default function Login() {
 
           <div className="space-y-2">
             <Label htmlFor="password" className="text-sm text-muted-foreground uppercase tracking-wide">
-              Mo
+              Mot de passe
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                className="h-12 bg-background border-border rounded-xl pr-12"
+                data-testid="password-input"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                Mot de passe oublié ?
+              </Link>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-heading font-bold uppercase tracking-wide"
+            data-testid="login-submit-btn"
+          >
+            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Se connecter'}
+          </Button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-muted-foreground">
+            Pas encore de compte ?{' '}
+            <Link to="/register" className="text-primary hover:underline" data-testid="register-link">
+              Créer un compte
+            </Link>
+          </p>
+        </div>
+      </Card>
+    </div>
+  );
+}
