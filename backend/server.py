@@ -64,7 +64,7 @@ app = FastAPI(title="Trouve Ton Dossard API")
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
- CORS Configuration - DOIT être configuré AVANT les routes
+ # CORS Configuration - DOIT être configuré AVANT les routes
 cors_origins = os.environ.get('CORS_ORIGINS', '').split(',')
 allowed_origins = [
     "https://trouvetontrail.vercel.app",
