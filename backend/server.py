@@ -64,6 +64,33 @@ app = FastAPI(title="Trouve Ton Dossard API")
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
+ CORS Configuration - DOIT être configuré AVANT les routes
+cors_origins = os.environ.get('CORS_ORIGINS', '').split(',')
+allowed_origins = [
+    "https://trouvetontrail.vercel.app",
+    "https://trouvetontrail-git-main-*.vercel.app",  # Preview deployments
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+
+# Add from environment variable
+for origin in cors_origins:
+    if origin.strip() and origin.strip() != '*':
+        allowed_origins.append(origin.strip())
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=["Content-Type", "Authorization", "Accept"],
+    expose_headers=["*"],
+)
+
+api_router = APIRouter(prefix="/api")
+security = HTTPBearer()
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -1072,14 +1099,6 @@ async def reject_report(race_id: str, user: dict = Depends(get_admin_user)):
 
 # Include router
 app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
