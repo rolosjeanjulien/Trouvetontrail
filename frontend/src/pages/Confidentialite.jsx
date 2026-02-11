@@ -21,7 +21,7 @@ export default function Confidentialite() {
             <section>
               <h2 className="font-heading text-xl font-bold text-primary mb-4">1. Introduction</h2>
               <p className="text-muted-foreground">
-                La présente politique de confidentialité décrit comment <strong className="text-foreground">Trouve Ton Dossard</strong> collecte, 
+                La présente politique de confidentialité décrit comment <strong className="text-foreground">Trouve Ton Trail</strong> collecte, 
                 utilise et protège vos données personnelles conformément au Règlement Général sur la Protection 
                 des Données (RGPD) et à la loi Informatique et Libertés.
               </p>
