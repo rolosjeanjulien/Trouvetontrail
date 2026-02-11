@@ -21,7 +21,7 @@ export default function MentionsLegales() {
             <section>
               <h2 className="font-heading text-xl font-bold text-primary mb-4">1. Éditeur du site</h2>
               <p className="text-muted-foreground">
-                Le site <strong className="text-foreground">Trouve Ton Dossard</strong> est édité par :
+                Le site <strong className="text-foreground">Trouve Ton Trail</strong> est édité par :
               </p>
               <ul className="text-muted-foreground mt-2 space-y-1">
                 <li><strong className="text-foreground">Éditeur :</strong> trouvetontrail.run</li>
