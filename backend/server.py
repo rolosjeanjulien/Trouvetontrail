@@ -21,10 +21,34 @@ import io
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+import os
+from motor.motor_asyncio import AsyncIOMotorClient
+
 # MongoDB connection (supports both local and Atlas URLs)
-mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+mongo_url = os.environ.get('MONGO_URL') or os.environ.get('MONGODB_URI')
+
+# Debug : afficher ce qui est lu (temporaire)
+print(f"🔍 Raw MONGO_URL from env: [{mongo_url}]")
+
+# Nettoyer guillemets/espaces si présents
+if mongo_url:
+    mongo_url = mongo_url.strip().strip('"').strip("'")
+    print(f"🔍 Cleaned MONGO_URL: [{mongo_url[:60]}...]")
+
+# Valider le format
+if not mongo_url or not (mongo_url.startswith('mongodb://') or mongo_url.startswith('mongodb+srv://')):
+    raise ValueError(f"❌ Invalid or missing MONGO_URL. Got: {mongo_url}")
+
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'trouve_ton_dossard')]
+
+# Test connexion au démarrage
+try:
+    client.admin.command('ping')
+    print("✅ Connected to MongoDB successfully!")
+except Exception as e:
+    print(f"❌ MongoDB connection failed: {e}")
+
 
 # JWT Configuration
 JWT_SECRET = os.environ.get('JWT_SECRET', 'trail-france-secret-key-2025')
