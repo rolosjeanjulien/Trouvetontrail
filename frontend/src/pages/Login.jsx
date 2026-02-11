@@ -119,12 +119,6 @@ export default function Login() {
             </Link>
           </p>
         </div>
-
-        {/* Demo credentials */}
-        <div className="mt-6 p-4 bg-secondary/50 rounded-xl">
-          <p className="text-xs text-muted-foreground text-center">
-            Compte admin de démo :<br />
-            <span className="text-foreground">admin@trailfrance.com / admin123</span>
           </p>
         </div>
       </Card>
