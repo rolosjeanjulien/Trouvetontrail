@@ -41,7 +41,7 @@ export const Navbar = () => {
           >
             <Mountain className="h-8 w-8 text-primary transition-transform group-hover:scale-110" />
             <span className="font-heading text-xl font-bold tracking-wide text-foreground">
-              TROUVE TON <span className="text-primary">DOSSARD</span>
+              TROUVE TON <span className="text-primary">TRAIL</span>
             </span>
           </Link>
 
