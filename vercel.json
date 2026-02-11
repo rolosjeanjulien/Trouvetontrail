@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd frontend && yarn build",
-  "outputDirectory": "frontend/dist",
-  "framework": "vite"
+  "installCommand": "yarn install --legacy-peer-deps",
+  "buildCommand": "yarn build",
+  "outputDirectory": "dist"
 }
