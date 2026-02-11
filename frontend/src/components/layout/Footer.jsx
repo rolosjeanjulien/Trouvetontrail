@@ -11,7 +11,7 @@ export const Footer = () => {
             <Link to="/" className="flex items-center gap-2 mb-4">
               <Mountain className="h-6 w-6 text-primary" />
               <span className="font-heading text-lg font-bold">
-                TROUVE TON <span className="text-primary">DOSSARD</span>
+                TROUVE TON <span className="text-primary">TRAIL</span>
               </span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-md">
@@ -72,7 +72,7 @@ export const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2025 Trouve Ton Dossard. Tous droits réservés.
+            © 2025 Trouve Ton Trail. Tous droits réservés.
           </p>
           <p className="text-xs text-muted-foreground">
             Fait avec ❤️ pour les traileurs
