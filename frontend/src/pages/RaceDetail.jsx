@@ -264,11 +264,11 @@ export default function RaceDetail() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-heading text-lg font-bold text-foreground mb-1">
-                      Les inscriptions sont-elles fermées ?
+                      Les inscriptions sont-elles fermées ou complètes ?
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Si vous savez que les inscriptions à cette course sont closes, signalez-le pour aider 
-                      la communauté. Après 3 signalements, le statut sera automatiquement mis à jour.
+                      Si vous savez que les inscriptions à cette course sont closes ou complètes, signalez-le pour aider 
+                      la communauté.
                     </p>
                     <Button
                       variant="outline"
@@ -289,7 +289,7 @@ export default function RaceDetail() {
                       ) : (
                         <>
                           <AlertTriangle className="h-4 w-4 mr-2" />
-                          Signaler inscriptions closes
+                          Signaler inscriptions closes ou complètes
                         </>
                       )}
                     </Button>
@@ -339,28 +339,8 @@ export default function RaceDetail() {
                   <Share2 className="h-5 w-5 mr-2" />
                   Partager
                 </Button>
-              </div>
-
-              {/* Registration info */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="font-heading text-sm uppercase tracking-wide text-muted-foreground mb-3">
-                  Inscriptions
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Ouverture</span>
-                    <span className="text-foreground">{formatDate(race.registration_open_date)}</span>
-                  </div>
-                  {race.registration_close_date && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Fermeture</span>
-                      <span className="text-foreground">{formatDate(race.registration_close_date)}</span>
-                    </div>
-                  )}
                 </div>
-              </div>
             </Card>
-
             {/* Ad Banner - sidebar */}
             <AdBannerSidebar className="mt-6" />
           </div>
