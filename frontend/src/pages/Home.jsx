@@ -106,7 +106,7 @@ export default function Home() {
   const stats = [
     { icon: Mountain, value: '500+', label: 'Courses en France' },
     { icon: Map, value: '13', label: 'Régions couvertes' },
-    { icon: Calendar, value: '2025', label: 'Calendrier à jour' },
+    { icon: Calendar, value: '2026', label: 'Calendrier à jour' },
     { icon: TrendingUp, value: '10k+', label: 'Coureurs actifs' },
   ];
 
