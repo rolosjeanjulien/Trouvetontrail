@@ -21,34 +21,10 @@ import io
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-import os
-from motor.motor_asyncio import AsyncIOMotorClient
-
 # MongoDB connection (supports both local and Atlas URLs)
-mongo_url = os.environ.get('MONGO_URL') or os.environ.get('MONGODB_URI')
-
-# Debug : afficher ce qui est lu (temporaire)
-print(f"🔍 Raw MONGO_URL from env: [{mongo_url}]")
-
-# Nettoyer guillemets/espaces si présents
-if mongo_url:
-    mongo_url = mongo_url.strip().strip('"').strip("'")
-    print(f"🔍 Cleaned MONGO_URL: [{mongo_url[:60]}...]")
-
-# Valider le format
-if not mongo_url or not (mongo_url.startswith('mongodb://') or mongo_url.startswith('mongodb+srv://')):
-    raise ValueError(f"❌ Invalid or missing MONGO_URL. Got: {mongo_url}")
-
+mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'trouve_ton_dossard')]
-
-# Test connexion au démarrage
-try:
-    client.admin.command('ping')
-    print("✅ Connected to MongoDB successfully!")
-except Exception as e:
-    print(f"❌ MongoDB connection failed: {e}")
-
 
 # JWT Configuration
 JWT_SECRET = os.environ.get('JWT_SECRET', 'trail-france-secret-key-2025')
@@ -64,33 +40,6 @@ app = FastAPI(title="Trouve Ton Dossard API")
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer()
 
- # CORS Configuration - DOIT être configuré AVANT les routes
-cors_origins = os.environ.get('CORS_ORIGINS', '').split(',')
-allowed_origins = [
-    "https://trouvetontrail.vercel.app",
-    "https://trouvetontrail-git-main-*.vercel.app",  # Preview deployments
-    "http://localhost:3000",
-    "http://localhost:5173",
-]
-
-# Add from environment variable
-for origin in cors_origins:
-    if origin.strip() and origin.strip() != '*':
-        allowed_origins.append(origin.strip())
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["Content-Type", "Authorization", "Accept"],
-    expose_headers=["*"],
-)
-
-api_router = APIRouter(prefix="/api")
-security = HTTPBearer()
-
-
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -102,9 +51,10 @@ class RaceStatus(str, Enum):
     REJECTED = "rejected"
 
 class RegistrationStatus(str, Enum):
-    NOT_OPEN = "not_open"
-    OPEN = "open"
-    CLOSED = "closed"
+    COMING_SOON = "coming_soon"  # Prochainement - avant date ouverture
+    OPEN = "open"                # Ouvertes - après date ouverture
+    FULL = "full"                # Complet - signalé par users ou admin
+    CLOSED = "closed"            # Closes - forcé manuellement
 
 class UserRole(str, Enum):
     USER = "user"
@@ -145,10 +95,10 @@ class RaceCreate(BaseModel):
     elevation_gain: int
     race_date: str
     registration_open_date: str
-    registration_close_date: Optional[str] = None
     is_utmb: bool = False
     website_url: Optional[str] = None
     image_url: Optional[str] = None
+    manual_status: Optional[str] = None  # full, closed, or None for auto
 
 class RaceUpdate(BaseModel):
     name: Optional[str] = None
@@ -162,10 +112,10 @@ class RaceUpdate(BaseModel):
     elevation_gain: Optional[int] = None
     race_date: Optional[str] = None
     registration_open_date: Optional[str] = None
-    registration_close_date: Optional[str] = None
     is_utmb: Optional[bool] = None
     website_url: Optional[str] = None
     image_url: Optional[str] = None
+    manual_status: Optional[str] = None  # full, closed, or None to reset to auto
 
 class RaceResponse(BaseModel):
     id: str
@@ -180,15 +130,15 @@ class RaceResponse(BaseModel):
     elevation_gain: int
     race_date: str
     registration_open_date: str
-    registration_close_date: Optional[str] = None
     registration_status: str
+    manual_status: Optional[str] = None  # Pour forcer un statut (full, closed)
     is_utmb: bool
     website_url: Optional[str] = None
     image_url: Optional[str] = None
     status: str
     submitted_by: Optional[str] = None
     created_at: str
-    auto_closed_by_reports: Optional[bool] = None
+    reported_full: Optional[bool] = None  # Signalé complet par la communauté
 
 class FavoriteResponse(BaseModel):
     id: str
@@ -237,27 +187,39 @@ async def get_admin_user(credentials: HTTPAuthorizationCredentials = Depends(sec
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
 
-def calculate_registration_status(open_date: str, close_date: Optional[str]) -> str:
+def calculate_registration_status(race: dict) -> str:
+    """
+    Calculate registration status based on:
+    1. Manual status (admin override) - highest priority
+    2. Reported full by community
+    3. Automatic calculation based on opening date
+    """
+    # Priority 1: Manual status override
+    manual_status = race.get('manual_status')
+    if manual_status in [RegistrationStatus.FULL, RegistrationStatus.CLOSED]:
+        return manual_status
+    
+    # Priority 2: Reported full by community
+    if race.get('reported_full'):
+        return RegistrationStatus.FULL
+    
+    # Priority 3: Automatic calculation
+    open_date = race.get('registration_open_date', '')
+    if not open_date:
+        return RegistrationStatus.COMING_SOON
+    
     now = datetime.now(timezone.utc)
     try:
-        # Handle dates without timezone (YYYY-MM-DD format)
         if 'T' not in open_date and '+' not in open_date:
             open_dt = datetime.strptime(open_date, '%Y-%m-%d').replace(tzinfo=timezone.utc)
         else:
             open_dt = datetime.fromisoformat(open_date.replace('Z', '+00:00'))
         
         if now < open_dt:
-            return RegistrationStatus.NOT_OPEN
-        if close_date:
-            if 'T' not in close_date and '+' not in close_date:
-                close_dt = datetime.strptime(close_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
-            else:
-                close_dt = datetime.fromisoformat(close_date.replace('Z', '+00:00'))
-            if now > close_dt:
-                return RegistrationStatus.CLOSED
+            return RegistrationStatus.COMING_SOON
         return RegistrationStatus.OPEN
-    except:
-        return RegistrationStatus.NOT_OPEN
+    except Exception:
+        return RegistrationStatus.COMING_SOON
 
 def send_email(to_email: str, subject: str, html_content: str):
     if not SENDGRID_API_KEY:
@@ -430,10 +392,7 @@ async def get_races(
     
     result = []
     for race in races:
-        reg_status = calculate_registration_status(
-            race.get('registration_open_date', ''),
-            race.get('registration_close_date')
-        )
+        reg_status = calculate_registration_status(race)
         if registration_status and reg_status != registration_status:
             continue
         race['registration_status'] = reg_status
@@ -446,10 +405,7 @@ async def get_race(race_id: str):
     race = await db.races.find_one({"id": race_id}, {"_id": 0})
     if not race:
         raise HTTPException(status_code=404, detail="Race not found")
-    race['registration_status'] = calculate_registration_status(
-        race.get('registration_open_date', ''),
-        race.get('registration_close_date')
-    )
+    race['registration_status'] = calculate_registration_status(race)
     return RaceResponse(**race)
 
 @api_router.post("/races", response_model=RaceResponse)
@@ -465,10 +421,7 @@ async def create_race(race_data: RaceCreate, user: dict = Depends(get_current_us
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.races.insert_one(race)
-    race['registration_status'] = calculate_registration_status(
-        race.get('registration_open_date', ''),
-        race.get('registration_close_date')
-    )
+    race['registration_status'] = calculate_registration_status(race)
     return RaceResponse(**race)
 
 @api_router.put("/races/{race_id}", response_model=RaceResponse)
@@ -481,14 +434,15 @@ async def update_race(race_id: str, race_data: RaceUpdate, user: dict = Depends(
         raise HTTPException(status_code=403, detail="Not authorized")
     
     update_data = {k: v for k, v in race_data.model_dump().items() if v is not None}
+    # Allow resetting manual_status to None (auto mode)
+    if 'manual_status' in race_data.model_dump() and race_data.manual_status is None:
+        update_data['manual_status'] = None
+    
     if update_data:
         await db.races.update_one({"id": race_id}, {"$set": update_data})
     
     updated = await db.races.find_one({"id": race_id}, {"_id": 0})
-    updated['registration_status'] = calculate_registration_status(
-        updated.get('registration_open_date', ''),
-        updated.get('registration_close_date')
-    )
+    updated['registration_status'] = calculate_registration_status(updated)
     return RaceResponse(**updated)
 
 @api_router.delete("/races/{race_id}")
@@ -504,10 +458,17 @@ async def get_pending_races(user: dict = Depends(get_admin_user)):
     races = await db.races.find({"status": RaceStatus.PENDING}, {"_id": 0}).to_list(100)
     result = []
     for race in races:
-        race['registration_status'] = calculate_registration_status(
-            race.get('registration_open_date', ''),
-            race.get('registration_close_date')
-        )
+        race['registration_status'] = calculate_registration_status(race)
+        result.append(RaceResponse(**race))
+    return result
+
+@api_router.get("/admin/races", response_model=List[RaceResponse])
+async def get_all_races_admin(user: dict = Depends(get_admin_user)):
+    """Get all approved races for admin management"""
+    races = await db.races.find({"status": RaceStatus.APPROVED}, {"_id": 0}).sort("name", 1).to_list(500)
+    result = []
+    for race in races:
+        race['registration_status'] = calculate_registration_status(race)
         result.append(RaceResponse(**race))
     return result
 
@@ -656,10 +617,7 @@ async def get_favorites(user: dict = Depends(get_current_user)):
     for fav in favorites:
         race = races_dict.get(fav['race_id'])
         if race:
-            race['registration_status'] = calculate_registration_status(
-                race.get('registration_open_date', ''),
-                race.get('registration_close_date')
-            )
+            race['registration_status'] = calculate_registration_status(race)
             result.append({
                 "favorite": fav,
                 "race": race
@@ -946,15 +904,8 @@ async def report_registration_closed(
     if not race:
         raise HTTPException(status_code=404, detail="Course non trouvée")
     
-    # Générer un identifiant unique pour ce visiteur (basé sur IP ou session)
-    # Pour simplicité, on utilise un hash de l'heure + race_id pour limiter les abus
+    # Générer un identifiant unique pour ce visiteur
     visitor_id = str(uuid.uuid4())  # En prod, utiliser IP ou fingerprint
-    
-    # Vérifier si déjà signalé récemment (dans les dernières 24h)
-    existing_report = await db.reports.find_one({
-        "race_id": race_id,
-        "created_at": {"$gte": (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()}
-    })
     
     # Créer le signalement
     report_doc = {
@@ -976,15 +927,14 @@ async def report_registration_closed(
         "created_at": {"$gte": week_ago}
     })
     
-    # Si 3 signalements ou plus → validation automatique
+    # Si 3 signalements ou plus → validation automatique (marquer comme COMPLET)
     if report_count >= REPORTS_THRESHOLD:
-        # Mettre à jour la course pour fermer les inscriptions
+        # Mettre à jour la course comme "complet" signalé par la communauté
         await db.races.update_one(
             {"id": race_id},
             {"$set": {
-                "registration_close_date": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
-                "auto_closed_by_reports": True,
-                "auto_closed_at": datetime.now(timezone.utc).isoformat()
+                "reported_full": True,
+                "reported_full_at": datetime.now(timezone.utc).isoformat()
             }}
         )
         
@@ -997,18 +947,18 @@ async def report_registration_closed(
         # Envoyer email de notification
         if SENDGRID_API_KEY:
             html_content = f"""
-            <h2>🔴 Inscriptions fermées automatiquement</h2>
+            <h2>⚫ Course marquée COMPLÈTE automatiquement</h2>
             <p><strong>{REPORTS_THRESHOLD} signalements</strong> ont été reçus pour la course :</p>
             <p style="font-size: 18px; font-weight: bold;">{race['name']}</p>
             <p>📍 {race['location']}, {race['region']}</p>
-            <p>Les inscriptions ont été automatiquement marquées comme fermées.</p>
+            <p>La course a été automatiquement marquée comme complète.</p>
             <p><a href="{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/races/{race_id}">Voir la course</a></p>
             """
-            background_tasks.add_task(send_email, ADMIN_EMAIL, f"[AUTO] Inscriptions fermées - {race['name']}", html_content)
+            background_tasks.add_task(send_email, ADMIN_EMAIL, f"[AUTO] Course complète - {race['name']}", html_content)
         
-        logger.info(f"Auto-closed registration for race {race['name']} after {report_count} reports")
+        logger.info(f"Auto-marked race as full: {race['name']} after {report_count} reports")
         return {
-            "message": "Merci ! Les inscriptions ont été automatiquement marquées comme fermées.",
+            "message": "Merci ! La course a été marquée comme complète.",
             "auto_closed": True,
             "report_count": report_count
         }
@@ -1016,8 +966,8 @@ async def report_registration_closed(
     # Sinon, envoyer un email de notification à l'admin
     if SENDGRID_API_KEY:
         html_content = f"""
-        <h2>⚠️ Nouveau signalement d'inscriptions closes</h2>
-        <p>Un visiteur a signalé que les inscriptions sont closes pour :</p>
+        <h2>⚠️ Nouveau signalement - Course complète</h2>
+        <p>Un visiteur a signalé que la course est complète :</p>
         <p style="font-size: 18px; font-weight: bold;">{race['name']}</p>
         <p>📍 {race['location']}, {race['region']}</p>
         <p>📊 <strong>{report_count}/{REPORTS_THRESHOLD}</strong> signalement(s) reçu(s)</p>
@@ -1030,7 +980,7 @@ async def report_registration_closed(
             </a>
         </p>
         """
-        background_tasks.add_task(send_email, ADMIN_EMAIL, f"[Signalement] {race['name']} - Inscriptions closes", html_content)
+        background_tasks.add_task(send_email, ADMIN_EMAIL, f"[Signalement] {race['name']} - Course complète", html_content)
     
     logger.info(f"Report received for race {race['name']}: {report_count}/{REPORTS_THRESHOLD}")
     return {
@@ -1062,19 +1012,18 @@ async def get_pending_reports(user: dict = Depends(get_admin_user)):
 
 @api_router.post("/admin/reports/{race_id}/validate")
 async def validate_report(race_id: str, user: dict = Depends(get_admin_user)):
-    """Valider un signalement et fermer les inscriptions"""
+    """Valider un signalement et marquer la course comme complète"""
     race = await db.races.find_one({"id": race_id}, {"_id": 0})
     if not race:
         raise HTTPException(status_code=404, detail="Course non trouvée")
     
-    # Fermer les inscriptions
+    # Marquer comme complet
     await db.races.update_one(
         {"id": race_id},
         {"$set": {
-            "registration_close_date": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
-            "manually_closed": True,
-            "closed_at": datetime.now(timezone.utc).isoformat(),
-            "closed_by": user['id']
+            "reported_full": True,
+            "reported_full_at": datetime.now(timezone.utc).isoformat(),
+            "validated_by": user['id']
         }}
     )
     
@@ -1084,7 +1033,7 @@ async def validate_report(race_id: str, user: dict = Depends(get_admin_user)):
         {"$set": {"status": "validated", "validated_by": user['id']}}
     )
     
-    return {"message": f"Inscriptions fermées pour {race['name']}"}
+    return {"message": f"Course marquée comme complète : {race['name']}"}
 
 @api_router.post("/admin/reports/{race_id}/reject")
 async def reject_report(race_id: str, user: dict = Depends(get_admin_user)):
@@ -1097,8 +1046,42 @@ async def reject_report(race_id: str, user: dict = Depends(get_admin_user)):
     
     return {"message": f"{result.modified_count} signalement(s) rejeté(s)"}
 
+# ==================== DATABASE INDEXES ====================
+@app.on_event("startup")
+async def create_indexes():
+    """Create MongoDB indexes for optimized queries"""
+    try:
+        # Index for race queries
+        await db.races.create_index([("status", 1), ("region", 1)])
+        await db.races.create_index([("status", 1), ("race_date", 1)])
+        await db.races.create_index([("distance_km", 1)])
+        await db.races.create_index([("name", "text"), ("location", "text")])
+        await db.races.create_index([("is_utmb", 1)])
+        
+        # Index for reports
+        await db.reports.create_index([("race_id", 1), ("status", 1)])
+        await db.reports.create_index([("created_at", -1)])
+        
+        # Index for favorites
+        await db.favorites.create_index([("user_id", 1), ("race_id", 1)], unique=True)
+        
+        # Index for users
+        await db.users.create_index([("email", 1)], unique=True)
+        
+        logger.info("MongoDB indexes created successfully")
+    except Exception as e:
+        logger.error(f"Error creating indexes: {e}")
+
 # Include router
 app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
